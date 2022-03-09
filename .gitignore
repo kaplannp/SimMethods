@@ -1,0 +1,6 @@
+**/a.out
+**/callgrind.out.*
+Proj01/Part01/ballsim
+**/TODO.txt
+**/gmon.out
+**/gprof.out

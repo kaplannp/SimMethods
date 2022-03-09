@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 #position = np.asarray([0.0, 1.0])
 #velocity = np.asarray([1.0, 1.0])
 #px, py, vx, vy
-state = np.asarray([0.0, 1.0, 1.0, 2.0])
+state = np.asarray([0.0, 10.0, 1.0, 2.0])
+endt = 1.5
 
 def derivative(t, y, g):
   velocity = y[2:]
@@ -39,14 +40,16 @@ def plotBallXY(states, t_eval):
     ax.set_zlabel("time (t)")
 
 
-endt = 0.6
-t_eval = np.linspace(0.0, endt, 20);
+t_eval = np.linspace(0.0, endt, 20000000);
 result = scipy.integrate.solve_ivp(derivative, (0.0, endt), state, t_eval=t_eval,
         args=(-9.8,))
 states = result['y'].T
-plotBallY(states, t_eval)
-plt.show()
-plotBallXY(states, t_eval)
-plt.show()
+
+#plotBallY(states, t_eval)
+#plt.show()
+#plotBallXY(states, t_eval)
+#plt.show()
 #print("Symbolic answer: pos=", pos_t, "speed=", vel_t)
+final_result = states[-1,:]
+print(final_result)
 
