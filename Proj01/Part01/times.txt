@@ -1,0 +1,13 @@
+PYTHON
+7.36s user 6.97s system
+7.49s user 6.94s system
+7.31s user 7.14s system
+RESULTS
+[  2.25749363  -2.41884687   3.74323697 -33.82471251]
+
+C++
+5.36s user 0.85s system
+5.32s user 0.87s system
+5.60s user 0.89s system
+RESULTS
+2.25684, -2.41745, 3.74205, -33.8215

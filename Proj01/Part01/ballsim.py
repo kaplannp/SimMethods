@@ -45,6 +45,8 @@ result = scipy.integrate.solve_ivp(derivative, (0.0, endt), state, t_eval=t_eval
         args=(-9.8,))
 states = result['y'].T
 plotBallY(states, t_eval)
+plt.title("Ball height vs time")
+plt.savefig('parab_ball.png')
 plt.show()
 plotBallXY(states, t_eval)
 plt.show()
