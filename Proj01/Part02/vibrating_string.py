@@ -16,6 +16,10 @@ from numpy import cos, sin, pi
 from scipy.optimize import root_scalar
 from scipy.optimize import minimize
 from scipy.optimize import differential_evolution
+from scipy.optimize import fmin
+from scipy.optimize import fmin_ncg
+from scipy.optimize import fmin_powell
+
 
 
 def u(x, t, L, a, prec=1e-7):
@@ -85,13 +89,15 @@ def getPeriod(dt, c, pos, vel):
     vel1 = vel[vel.shape[0]//2]
     while(vel0*vel1 >= 0):
         #while the velocity has not changed sign
-        #first round, vel0 == 0, so vel0*vel1 is greater than 0
+        #first round, vel0 == 0, so vel0*vel1 is greater than eq 0
         euler(dt+.0000001, dt, c, pos, vel)
         vel0 = vel1
         vel1 = vel[vel.shape[0]//2]
         #update period with another dt
         period += dt
     return period*2 #period is only one half cycle
+
+
 
 if __name__ == '__main__':# s
     import matplotlib
@@ -100,11 +106,12 @@ if __name__ == '__main__':# s
     #THE TWIDDLES
     L = .3 # m the length of the string (violin g)
     t0 = 0.0 # s start time
-    simdt = 1e-4 # s granularity of timestep
-    # not used for opt: c = 1.5e5 # spring constant. bigger is more force
+    simdt = 1e-5 # s granularity of timestep
+    #note c is used as a guess, or not used in optimization routines
+    c = 1.5e5 # spring constant. bigger is more force
     granularity_line = 101 # this is the number of segments to divide string
     #target for optimization
-    targetFreq = 2
+    targetFreq = 196
 
     #Plotting Twiddles
     graph_ylim = 0.05  # m 
@@ -115,15 +122,27 @@ if __name__ == '__main__':# s
     pos = (1/2 - np.abs(x-L/2)/L)/50 # who knows what this is.
     vel = np.zeros(granularity_line)
 
+    def optimizableScalar(x):
+        '''
+        sometimes you need to optimize scalar not array
+        '''
+        return (targetFreq - 1/getPeriod(simdt, x, pos.copy(), vel.copy()))**2
+
     def optimizable(x):
         '''
         calls getPeriod with arguments from main, and will compare to targetFreq
         returns abs
         '''
-        return (targetFreq - getPeriod(simdt, x[0], pos.copy(), vel.copy()))**2
+        return optimizableScalar(x[0])
 
-    sol = differential_evolution(optimizable, [(1e2, 1e7)])
+    print(1/getPeriod(simdt, 59449, pos.copy(), vel.copy()))
+    sol = differential_evolution(optimizable, [(1e0, 1e12)], maxiter=int(1e5))
+    #sol = fmin(optimizable, c, maxiter=10)
+    #sol = fmin_powell(optimizable, c)
+    #sol = root_scalar(optimizableScalar, method='brentq', bracket=(1e0,1e9))
+    print(sol)
     c = sol.x[0] # update c to get the target frequency
+    #c = sol[0] # update c to get the target frequency
 
     def anim(i):
         global pos, vel
