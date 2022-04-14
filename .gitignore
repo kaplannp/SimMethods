@@ -4,3 +4,6 @@ Proj01/Part01/ballsim
 **/TODO.txt
 **/gmon.out
 **/gprof.out
+**/*.o
+**/main
+/Proj02/Out/
