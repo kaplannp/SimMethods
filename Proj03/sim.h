@@ -8,22 +8,79 @@ namespace sim{
   typedef array<double, 2> GridElT;
   typedef array<GridElT, J_GRIDSIZE> GridRowT;
   typedef array<GridRowT, I_GRIDSIZE> GridT;
+  //For Pressure
+  typedef array<double, J_GRIDSIZE> PGridRowT;
+  typedef array<PGridRowT, I_GRIDSIZE> PGridT;
   class Simulation{
     private:
       GridT grid;
+      PGridT pGrid;
       double t;
       const double END_T;
       const double DT;
-      const double BOX_SPACING = 1;
       const int nRows = I_GRIDSIZE;
       const int nCols = J_GRIDSIZE;
+      const double BOX_SPACING = 1;
+      const double VISCOSITY = 1;
+      const double RHO = 1;
       /*
        * workhorse of the simulation method. updates for a timestep
        * @param delT the time to update
        */
       void update(double delT);
 
-      GridT* calcDiffYG();
+      /*
+       * These methods are used to calculate changes in the flow per
+       * units of space. DiffGI gives the differences along the y axis
+       */
+      GridT* calcDiffGI(GridT& grid);
+      GridT* calcDiffGJ(GridT& grid);
+
+      /*
+       * These methods are used to calculate the double derivative
+       * of flow per unit of space. Diff2GI gives the difference along the 
+       * y axis
+       */
+      GridT* calcDiff2GI(GridT& grid);
+      GridT* calcDiff2GJ(GridT& grid);
+
+      /*
+       * Calculate the increment of flow contributed by movement of flow
+       */
+      GridT* calcFlowUpdate(GridT& diffI, GridT& diffJ, GridT& diff2I, 
+          GridT& diff2J, double dt);
+
+      /*
+       * used to sum two grids together
+       */
+      GridT* sumGrids(GridT& first, GridT& second);
+
+      /*
+       * used to assign the values of one grid to another grid
+       */
+      void assignGrid(GridT& target, GridT& value);
+
+      /*
+       * Iteratively solve the Pressure Poisson distribution
+       * @param uStar the starting value of uStar (just so we don't need to 
+       *   recompute)
+       * @param pressure so you have a good starting point
+       * Big thanks to Gaurav. This function is a translation of his python
+       * version
+       *   https://towardsdatascience.com/computational-fluid-dynamics-using-\
+       *   python-modeling-laminar-flow-272dad1ebec
+       */
+      void calcPressure(GridT& uStar, PGridT& pressure);
+
+      /*
+       * calculates the norm of a 2d vector
+       */
+      double vecNorm(const array<double, 2>& vec);
+      /*
+       * useful for pretty printing
+       */
+      double round2Zero(double val);
+
 
     public:
       /*
@@ -39,6 +96,6 @@ namespace sim{
       /*
        * prints out the grid
        */
-      void printGrid();
+      void printGrid(GridT& grid);
   };
 }

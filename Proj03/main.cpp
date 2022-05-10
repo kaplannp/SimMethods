@@ -10,6 +10,6 @@ int main(){
   const double vel{5};
   Simulation sim{endT, dt, vel};
   sim.simulate();
-  sim.printGrid();
+  return 0;
 }
 
