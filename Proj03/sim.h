@@ -5,16 +5,13 @@
 using namespace std;
 
 namespace sim{
-  typedef array<double, 2> GridElT;
-  typedef array<GridElT, J_GRIDSIZE> GridRowT;
+  typedef array<double, J_GRIDSIZE> GridRowT;
   typedef array<GridRowT, I_GRIDSIZE> GridT;
-  //For Pressure
-  typedef array<double, J_GRIDSIZE> PGridRowT;
-  typedef array<PGridRowT, I_GRIDSIZE> PGridT;
   class Simulation{
     private:
-      GridT grid;
-      PGridT pGrid;
+      GridT iGrid;
+      GridT jGrid;
+      GridT pGrid;
       double t;
       const double END_T;
       const double DT;
@@ -45,9 +42,20 @@ namespace sim{
       GridT* calcDiff2GJ(GridT& grid);
 
       /*
-       * Calculate the increment of flow contributed by movement of flow
+       * Calculate the increment of flow contributed by movement of flow.
+       * Let the direction of the flows kept in grid1 be the x direction,
+       * then this returns the flow update in the x direction
+       * @param grid1 the flows in x direction
+       * @param grid2 the flows in the y direction
+       * @param diffI the 1st derivate of x in the i direction
+       * @param diffJ the 1st derivative of x in the j direction
+       * @param diff2I the 2nd derivative of x in the i direction
+       * @param diff2J the 2nd derivative of x in the j direction
+       * @param dt the change in time
+       * 
+       * @
        */
-      GridT* calcFlowUpdate(GridT& diffI, GridT& diffJ, GridT& diff2I, 
+      GridT* calcFlowUpdate(GridT& grid1, GridT& grid2, GridT& diffI, GridT& diffJ, GridT& diff2I, 
           GridT& diff2J, double dt);
 
       /*
@@ -70,7 +78,7 @@ namespace sim{
        *   https://towardsdatascience.com/computational-fluid-dynamics-using-\
        *   python-modeling-laminar-flow-272dad1ebec
        */
-      void calcPressure(GridT& uStar, PGridT& pressure);
+      void calcPressure(GridT& iStar, GridT& pressure);
 
       /*
        * calculates the norm of a 2d vector
@@ -96,6 +104,6 @@ namespace sim{
       /*
        * prints out the grid
        */
-      void printGrid(GridT& grid);
+      void printGrid(GridT& iGrid, GridT& jGrid);
   };
 }
