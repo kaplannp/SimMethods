@@ -1,8 +1,6 @@
 CC = g++
 CFLAGS = -ggdb -fmax-errors=1
 
-sanitized: sim.o main.o
-	$(CC) $^ -o $@ $(CFLAGS) -fsanitize=address
 main: sim.o main.o 
 	$(CC) $^ -o $@ $(CFLAGS)
 
