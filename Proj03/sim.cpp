@@ -95,25 +95,6 @@ namespace sim{
     applyJBoundaryConditions(*updatedJGrid);
     assignGrid(iGrid, *updatedIGrid);
     assignGrid(jGrid, *updatedJGrid);
-    delete iDiffI; iDiffI = nullptr;
-    delete jDiffI; jDiffI = nullptr;
-    delete iDiffJ; iDiffJ = nullptr;
-    delete jDiffJ; jDiffJ = nullptr;
-    delete iDiff2I; iDiff2I = nullptr;
-    delete jDiff2I; jDiff2I = nullptr;
-    delete iDiff2J; iDiff2J = nullptr;
-    delete jDiff2J; jDiff2J = nullptr;
-    delete iFlowUpdate; iFlowUpdate = nullptr;
-    delete jFlowUpdate; jFlowUpdate = nullptr;
-    delete iStar; iStar = nullptr;
-    delete jStar; jStar = nullptr;
-    delete pDiffI; pDiffI = nullptr;
-    delete pDiffJ; pDiffJ = nullptr;
-    delete updatedIGrid; updatedIGrid = nullptr;
-    delete updatedJGrid; updatedJGrid = nullptr;
-    delete pDiffIMult; pDiffIMult = nullptr;
-    delete pDiffJMult; pDiffJMult = nullptr;
-    delete updatePressure; updatePressure = nullptr;
     t += delT;
     //Log the current state
     fileStream << "---" << endl;
@@ -217,13 +198,7 @@ namespace sim{
       if(i>500){
         tol*=10;
       }
-      delete pDiff2I; pDiff2I = nullptr;
-      delete pDiff2J; pDiff2J = nullptr;
-      delete pDiff2IJ; pDiff2IJ = nullptr;
-      delete pDifference; pDifference = nullptr;
     }
-    delete iStarDiffI; iStarDiffI = nullptr;
-    delete jStarDiffJ; jStarDiffJ = nullptr;
     //printGrid(*retGrid);
   }
 
