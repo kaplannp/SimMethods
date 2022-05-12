@@ -24,6 +24,33 @@ namespace sim{
     //update the flow of first column (constant)
     for(int i = 0; i < nRows; i++)
       jGrid[i][0] = vel;
+    //initialize computation space
+    iDiffI = new GridT();
+    jDiffI = new GridT();
+    iDiffJ = new GridT();
+    jDiffJ = new GridT();
+    iDiff2I = new GridT();
+    jDiff2I = new GridT();
+    iDiff2J = new GridT();
+    jDiff2J = new GridT();
+    iFlowUpdate = new GridT();
+    jFlowUpdate = new GridT();
+    iStar = new GridT();
+    jStar = new GridT();
+    updatePressure = new GridT();
+    pDiffI = new GridT();
+    pDiffJ = new GridT();
+    pDiffIMult = new GridT();
+    pDiffJMult = new GridT();
+    updatedIGrid = new GridT();
+    updatedJGrid = new GridT();
+    //local func
+    iStarDiffI = new GridT();
+    jStarDiffJ = new GridT();
+    pDiff2I = new GridT();
+    pDiff2J = new GridT();
+    pDiff2IJ = new GridT();
+    pDifference = new GridT();
   }
 
   void Simulation::simulate(){
@@ -37,32 +64,32 @@ namespace sim{
   void Simulation::update(double delT){
     cout << "----------------------------------------------" << endl;
     printGrid(iGrid, jGrid);
-    GridT* iDiffI = calcDiffGI(iGrid);
-    GridT* jDiffI = calcDiffGI(jGrid);
-    GridT* iDiffJ = calcDiffGJ(iGrid);
-    GridT* jDiffJ = calcDiffGJ(jGrid);
-    GridT* iDiff2I = calcDiff2GI(iGrid);
-    GridT* jDiff2I = calcDiff2GI(jGrid);
-    GridT* iDiff2J = calcDiff2GJ(iGrid);
-    GridT* jDiff2J = calcDiff2GJ(jGrid);
-    GridT* iFlowUpdate = calcFlowUpdate(
-        iGrid, jGrid, *iDiffI, *iDiffJ, *iDiff2I, *iDiff2J, delT);
-    GridT* jFlowUpdate = calcFlowUpdate(
-        jGrid, iGrid, *jDiffI, *jDiffJ, *jDiff2I, *jDiff2J, delT);
-    GridT* iStar = sumGrids(iGrid, *iFlowUpdate);
+    calcDiffGI(*iDiffI, iGrid);
+    calcDiffGI(*jDiffI, jGrid);
+    calcDiffGJ(*iDiffJ, iGrid);
+    calcDiffGJ(*jDiffJ, jGrid);
+    calcDiff2GI(*iDiff2I, iGrid);
+    calcDiff2GI(*jDiff2I, jGrid);
+    calcDiff2GJ(*iDiff2J, iGrid);
+    calcDiff2GJ(*jDiff2J, jGrid);
+    calcFlowUpdate(
+        *iFlowUpdate, iGrid, jGrid, *iDiffI, *iDiffJ, *iDiff2I, *iDiff2J, delT);
+    calcFlowUpdate(
+        *jFlowUpdate, jGrid, iGrid, *jDiffI, *jDiffJ, *jDiff2I, *jDiff2J, delT);
+    sumGrids(*iStar, iGrid, *iFlowUpdate);
     //applyIBoundaryConditions(*iStar);
-    GridT* jStar = sumGrids(jGrid, *jFlowUpdate);
-    GridT* updatePressure = calcPressure(*iStar, *jStar, pGrid, delT);
+    sumGrids(*jStar, jGrid, *jFlowUpdate);
+    calcPressure(*updatePressure, *iStar, *jStar,  pGrid, delT);
     //as of now spatial boundaries are junk, but pressure bounds are good stuff
     assignGrid(pGrid, *updatePressure);
-    GridT* pDiffI = calcDiffGI(pGrid);
-    GridT* pDiffJ = calcDiffGJ(pGrid);
-    GridT* pDiffIMult = applyUnaryOp(
-        *pDiffI, [=](double x){ return x * - delT / RHO;});
-    GridT* pDiffJMult = applyUnaryOp(
-        *pDiffJ, [=](double x){ return x * - delT / RHO;});
-    GridT* updatedIGrid = sumGrids(*iStar, *pDiffIMult);
-    GridT* updatedJGrid = sumGrids(*jStar, *pDiffJMult);
+    calcDiffGI(*pDiffI, pGrid);
+    calcDiffGJ(*pDiffJ, pGrid);
+    applyUnaryOp(
+        *pDiffIMult, *pDiffI, [=](double x){ return x * - delT / RHO;});
+    applyUnaryOp(
+        *pDiffJMult, *pDiffJ, [=](double x){ return x * - delT / RHO;});
+    sumGrids(*updatedIGrid, *iStar, *pDiffIMult);
+    sumGrids(*updatedJGrid, *jStar, *pDiffJMult);
     //now you must apply boundary conditions to i and j grid
     applyIBoundaryConditions(*updatedIGrid);
     applyJBoundaryConditions(*updatedJGrid);
@@ -97,46 +124,41 @@ namespace sim{
     printGrid(pGrid, fileStream);
   }
 
-  GridT* Simulation::sumGrids(GridT& first, GridT& second){
-    GridT* sum = new GridT();
+  void Simulation::sumGrids(GridT& target, GridT& first, GridT& second){
     for(int i = 0; i < nRows; i++){
       for(int j = 0; j < nCols; j++){
-        (*sum)[i][j] = first[i][j] + second[i][j];
+        target[i][j] = first[i][j] + second[i][j];
       }
     }
-    return sum;
   }
 
-  GridT* Simulation::subGrids(GridT& first, GridT& second){
-    GridT* sum = new GridT();
+  void Simulation::subGrids(GridT& target, GridT& first, GridT& second){
     for(int i = 0; i < nRows; i++){
       for(int j = 0; j < nCols; j++){
-        (*sum)[i][j] = first[i][j] - second[i][j];
+        target[i][j] = first[i][j] - second[i][j];
       }
     }
-    return sum;
   }
 
-  GridT* Simulation::applyUnaryOp(GridT grid, function<double(double)> op){
-    GridT* outGrid = new GridT();
+  void Simulation::applyUnaryOp(GridT& target, GridT& grid, 
+      function<double(double)> op){
     for(int i = 0; i < nCols; i++)
       for(int j = 0; j < nRows; j++)
-        (*outGrid)[i][j] = op(grid[i][j]);
-    return outGrid;
+        target[i][j] = op(grid[i][j]);
   }
 
-  GridT* Simulation::calcPressure(GridT& iStar, GridT& jStar, GridT& pressure,
+  void Simulation::calcPressure(GridT& target, GridT& iStar, GridT& jStar, 
+      GridT& pressure,
       double dt){
-    GridT* retGrid = new GridT();
-    assignGrid(*retGrid, pressure);
+    assignGrid(target, pressure);
     //Define initial error and tolerance for convergence 
     //(error > tol necessary initially)
     double error = 1.0;
     double tol = 1e-3;
 
     //Evaluate derivative of starred velocities
-    GridT* iStarDiffI = calcDiffGI(iStar);
-    GridT* jStarDiffJ = calcDiffGJ(jStar);
+    calcDiffGI(*iStarDiffI, iStar);
+    calcDiffGJ(*jStarDiffJ, jStar);
 
     GridT pOld;
 
@@ -146,13 +168,11 @@ namespace sim{
       i++;
         
       //Save current pressure as p_old
-      assignGrid(pOld,*retGrid);
+      assignGrid(pOld,target);
       
       //Evaluate second derivative of pressure from p_old by doing this
       //p2_xy=(p_old[2:,1:cols+1]+p_old[0:rows,1:cols+1])/dy**2
       //     +(p_old[1:rows+1,2:]+p_old[1:rows+1,0:cols])/dx**2
-      GridT* pDiff2I = new GridT();
-      GridT* pDiff2J = new GridT();
       fillGrid(*pDiff2I, 0.0);
       fillGrid(*pDiff2J, 0.0);
       for(int i = 1; i < nRows - 1; i++){
@@ -168,14 +188,14 @@ namespace sim{
       }
       //TODO Perhaps set pressure to 0 along boundary?
 
-      GridT* pDiff2IJ = sumGrids(*pDiff2I, *pDiff2J);
+      sumGrids(*pDiff2IJ, *pDiff2I, *pDiff2J);
       
       //Calculate new pressure doing this
       //p[1:rows+1,1:cols+1]=(p2_xy)*factor-(rho*factor/dt)*(ustar1_x+vstar1_y)
       double factor = pow(BOX_SPACING,2) / 4;
       for(int i = 0; i < nRows; i++){
         for(int j = 0; j < nCols; j++){
-          (*retGrid)[i][j] = ((*pDiff2IJ)[i][j]) * factor 
+          target[i][j] = ((*pDiff2IJ)[i][j]) * factor 
             -((RHO*factor/dt) 
               *((*iStarDiffI)[i][j] + (*jStarDiffJ)[i][j])
              );
@@ -183,7 +203,7 @@ namespace sim{
       }
 
       //Find maximum error between old and new pressure matrices
-      GridT* pDifference = subGrids(*retGrid, pOld);
+      subGrids(*pDifference, target, pOld);
       error = 0; // will be overwritten to be max of pDifference
       for(int i = 0; i < nRows; i++){
         for(int j = 0; j < nCols; j++){
@@ -192,7 +212,7 @@ namespace sim{
       }
       //Dunno what this is about 
       //Apply pressure boundary conditions
-      applyPBoundaryConditions(*retGrid);
+      applyPBoundaryConditions(target);
       //Escape condition in case solution does not converge after 500 iterations
       if(i>500){
         tol*=10;
@@ -205,7 +225,6 @@ namespace sim{
     delete iStarDiffI; iStarDiffI = nullptr;
     delete jStarDiffJ; jStarDiffJ = nullptr;
     //printGrid(*retGrid);
-    return retGrid;
   }
 
   void Simulation::fillGrid(GridT& grid, double val){
@@ -223,8 +242,7 @@ namespace sim{
   }
 
   //Math helpers
-  GridT* Simulation::calcDiffGJ(GridT& grid){
-    GridT* diffGrid = new GridT();
+  void Simulation::calcDiffGJ(GridT& target, GridT& grid){
     //skip the first row b/c its
     //Note you start by calculating the flow out of last, but you'll bounce it
     //back later
@@ -232,79 +250,70 @@ namespace sim{
     //Assumption: the fluid never bounces back against
     for(int i = 0; i < nRows; i++){
       //go until the last col. skip first because you're not updating it. Ever.
-      (*diffGrid)[i][0] = 0;
-      (*diffGrid)[i][nCols-1] = 0;
+      target[i][0] = 0;
+      target[i][nCols-1] = 0;
       for(int j = 1; j < nCols - 1; j++){
-        (*diffGrid)[i][j] = (grid[i][j+1] - grid[i][j-1]) 
+        target[i][j] = (grid[i][j+1] - grid[i][j-1]) 
           / (2*BOX_SPACING);
       }
     }
-    return diffGrid;
   }
 
-  GridT* Simulation::calcDiffGI(GridT& grid){
-    GridT* diffGrid = new GridT();
+  void Simulation::calcDiffGI(GridT& target, GridT& grid){
     //now calculate the i component
     //you skip i=1 and because these values are assumed to be zero
     //TODO dunno if you should update the last one
     for(int j = 0; j < nCols; j++){
-      (*diffGrid)[0][j] = 0;
-      (*diffGrid)[nRows-1][j] = 0;
+      target[0][j] = 0;
+      target[nRows-1][j] = 0;
       for(int i = 1; i < nRows - 1; i++){
-        (*diffGrid)[i][j] = (grid[i][j+1] - grid[i-1][j]) 
+        target[i][j] = (grid[i][j+1] - grid[i-1][j]) 
           / (2*BOX_SPACING);
       }
     }
-    return diffGrid;
   }
 
-  GridT* Simulation::calcDiff2GI(GridT& grid){
-    GridT* diff2Grid = new GridT();
+  void Simulation::calcDiff2GI(GridT& target, GridT& grid){
     for(int j = 0; j < nCols; j++){
-      (*diff2Grid)[0][j] = 0;
-      (*diff2Grid)[nRows-1][j] = 0;
+      target[0][j] = 0;
+      target[nRows-1][j] = 0;
       for(int i = 1; i < nRows-1; i++){
-        (*diff2Grid)[i][j] = (grid[i+1][j] - 2*grid[i][j] + 
+        target[i][j] = (grid[i+1][j] - 2*grid[i][j] + 
             grid[i-1][j]) / pow(BOX_SPACING,2);
       }
     }
-    return diff2Grid;
   }
 
-  GridT* Simulation::calcDiff2GJ(GridT& grid){
-    GridT* diff2Grid = new GridT();
+  void Simulation::calcDiff2GJ(GridT& target, GridT& grid){
     for(int i = 0; i < nRows; i++){
-      (*diff2Grid)[i][0] = 0;
-      (*diff2Grid)[i][nCols-1] = 0;
+      target[i][0] = 0;
+      target[i][nCols-1] = 0;
       for(int j = 1; j < nCols-1; j++){
-        (*diff2Grid)[i][j] = (grid[i][j+1] - 2*grid[i][j] + 
+        target[i][j] = (grid[i][j+1] - 2*grid[i][j] + 
             grid[i][j-1]) / pow(BOX_SPACING,2);
       }
     }
-    return diff2Grid;
   }
 
-  GridT* Simulation::calcFlowUpdate(GridT& grid1, GridT& grid2, 
+  void Simulation::calcFlowUpdate(GridT& target, GridT& grid1, GridT& grid2, 
       GridT& diffI, GridT& diffJ, GridT& diff2I, GridT& diff2J, double dt){
-    GridT* update = new GridT();
     //these values are dependent on derivatives, so are undefined at bounds
     for(int j = 0; j < nCols; j++){
-      (*update)[0][j] = 0;
-      (*update)[nRows-1][j] = 0;
+      target[0][j] = 0;
+      target[nRows-1][j] = 0;
     }
     for(int i = 1; i < nRows - 1; i++){
       //set the 0th col to 0
-      (*update)[i][0] = 0;
+      target[i][0] = 0;
       for(int j = 1; j < nCols - 1; j++){
         //compute update 1
-        (*update)[i][j] = dt * (
+        target[i][j] = dt * (
             -grid1[i][j] * diffJ[i][j]
             -grid2[i][j] * diffI[i][j]
             +VISCOSITY * (diff2I[i][j] + diff2J[i][j])
             );
       }
     }
-    return update;
   }
 
   void Simulation::applyIBoundaryConditions(GridT& iGrid){

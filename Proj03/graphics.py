@@ -91,7 +91,7 @@ iArr, jArr, pArr = loader.load("simData.out")
 plotter = Plotter()
 while True:
     anim = plotter.plotFieldMovie(iArr, jArr)
-    writergif = animation.PillowWriter(fps=5) 
-    anim.save("stabalizedRho1e9Visc1e2.gif", writergif)
+    #writergif = animation.PillowWriter(fps=5) 
+    #anim.save("stabalizedRho1e9Visc1e2.gif", writergif)
     plt.show()
 

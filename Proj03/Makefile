@@ -1,6 +1,9 @@
 CC = g++
 CFLAGS = -ggdb -fmax-errors=1
+OPTFLAGS = -O3
 
+optimized: sim.o main.o
+	$(CC) $^ -o $(OPTFLAGS)
 main: sim.o main.o 
 	$(CC) $^ -o $@ $(CFLAGS)
 

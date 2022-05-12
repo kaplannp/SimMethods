@@ -25,8 +25,36 @@ namespace sim{
       const double VISCOSITY = 1e2;
       const double RHO = 1e9;
       ofstream fileStream;
+
+      //Bunch of space for computation
+      //updates
+      GridT* iDiffI;
+      GridT* jDiffI;
+      GridT* iDiffJ;
+      GridT* jDiffJ;
+      GridT* iDiff2I;
+      GridT* jDiff2I;
+      GridT* iDiff2J;
+      GridT* jDiff2J;
+      GridT* iFlowUpdate;
+      GridT* jFlowUpdate;
+      GridT* iStar;
+      GridT* jStar;
+      GridT* updatePressure;
+      GridT* pDiffI;
+      GridT* pDiffJ;
+      GridT* pDiffIMult;
+      GridT* pDiffJMult;
+      GridT* updatedIGrid;
+      GridT* updatedJGrid;
+      GridT* iStarDiffI;
+      GridT* jStarDiffJ;
+      GridT* pDiff2I;
+      GridT* pDiff2J;
+      GridT* pDiff2IJ;
+      GridT* pDifference;
       /*
-       * workhorse of the simulation method. updates for a timestep
+       * workhorse;
        * @param delT the time to update
        */
       void update(double delT);
@@ -37,16 +65,16 @@ namespace sim{
        * These methods are used to calculate changes in the flow per
        * units of space. DiffGI gives the differences along the y axis
        */
-      GridT* calcDiffGI(GridT& grid);
-      GridT* calcDiffGJ(GridT& grid);
+      void calcDiffGI(GridT& target, GridT& grid);
+      void calcDiffGJ(GridT& target, GridT& grid);
 
       /*
        * These methods are used to calculate the double derivative
        * of flow per unit of space. Diff2GI gives the difference along the 
        * y axis
        */
-      GridT* calcDiff2GI(GridT& grid);
-      GridT* calcDiff2GJ(GridT& grid);
+      void calcDiff2GI(GridT& target, GridT& grid);
+      void calcDiff2GJ(GridT& target, GridT& grid);
 
       /*
        * Calculate the increment of flow contributed by movement of flow.
@@ -62,19 +90,19 @@ namespace sim{
        * 
        * @
        */
-      GridT* calcFlowUpdate(GridT& grid1, GridT& grid2, GridT& diffI, 
+      void calcFlowUpdate(GridT& target, GridT& grid1, GridT& grid2, GridT& diffI, 
           GridT& diffJ, GridT& diff2I, GridT& diff2J, double dt);
 
       /*
        * used to sum two grids together
        */
-      GridT* sumGrids(GridT& first, GridT& second);
+      void sumGrids(GridT& target, GridT& first, GridT& second);
       /*
        * used to sub two grids together. It's about time we invented
        * a binary and unary operation applyer function or found one in the std,
        * but not about that at the moment
        */
-      GridT* subGrids(GridT& first, GridT& second);
+      void subGrids(GridT& target, GridT& first, GridT& second);
 
       /*
        * I got fed up with writing new functions. Try this
@@ -82,7 +110,8 @@ namespace sim{
        * @param op a function taking in a double and returning a double
        *   to be applied to the grid
        */
-      GridT* applyUnaryOp(GridT grid, function<double(double)> op);
+      void applyUnaryOp(GridT& target, GridT& grid, 
+          function<double(double)> op);
 
       /*
        * reflect from upper and lower any i current.
@@ -115,8 +144,8 @@ namespace sim{
        *   https://towardsdatascience.com/computational-fluid-dynamics-using-\
        *   python-modeling-laminar-flow-272dad1ebec
        */
-      GridT* calcPressure(
-          GridT& iStar, GridT& jStar, GridT& pressure, double dt);
+      void calcPressure(GridT& target, GridT& iStar, GridT& jStar, 
+          GridT& pressure, double dt);
 
       /*
        * fills a grid with the value
