@@ -80,6 +80,7 @@ class Plotter:
 
     def plotField(self, i, iField, jField):
         plt.clf();
+        plt.title("snapshot {}".format(i))
         plt.quiver(jField[i], iField[i], scale = 1e2)
 
 
@@ -90,7 +91,7 @@ iArr, jArr, pArr = loader.load("simData.out")
 plotter = Plotter()
 while True:
     anim = plotter.plotFieldMovie(iArr, jArr)
-    #writergif = animation.PillowWriter(fps=5) 
-    #anim.save("withReflection.gif", writergif)
+    writergif = animation.PillowWriter(fps=5) 
+    anim.save("stabalizedRho1e9Visc1e2.gif", writergif)
     plt.show()
 

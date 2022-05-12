@@ -22,8 +22,8 @@ namespace sim{
       const int nRows = I_GRIDSIZE;
       const int nCols = J_GRIDSIZE;
       const double BOX_SPACING = 1;
-      const double VISCOSITY = .1;
-      const double RHO = 10;
+      const double VISCOSITY = 1e2;
+      const double RHO = 1e9;
       ofstream fileStream;
       /*
        * workhorse of the simulation method. updates for a timestep
