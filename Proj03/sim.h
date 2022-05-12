@@ -23,7 +23,7 @@ namespace sim{
       const int nCols = J_GRIDSIZE;
       const double BOX_SPACING = 1;
       const double VISCOSITY = 1e2;
-      const double RHO = 1e9;
+      const double RHO = 1e-9;
       ofstream fileStream;
 
       //Bunch of space for computation
